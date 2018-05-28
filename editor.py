@@ -1,43 +1,19 @@
 import pygame
-import os
-import time
-
-class Renderer:
-	def __init__(self, camera, gameMap):
-		self.camera = camera
-		pygame.init()
-		self.display = pygame.display.set_mode((self.camera.width, self.camera.height))
-		self.sprites = {"walls":self.loadSpritesFromFolder("./walls/"), "hazards":[]}
-		self.currentTime = time.clock()
-		self.maxFPS = 60
-		self.map = gameMap
-
-	def loadSpritesFromFolder(self, path):
-		return [pygame.image.load(path + fileName) for fileName in os.listdir(path)]
-
-	def update(self):
-		self.display.fill((0,0,0))
-		for wall in self.map.getWalls():
-			relativeX = wall.x - self.camera.x
-			relativeY = wall.y - self.camera.y
-			self.display.blit(wall.sprite, (relativeX, relativeY))
-		pygame.display.update()
-
-		frameTime = time.clock() - self.currentTime
-		if frameTime < 1000.0 / self.maxFPS:
-			time.sleep((1000.0 / self.maxFPS - frameTime) / 1000.0)
-		self.currentTime = time.clock()
+import renderer
+import level
+import camera
+import entities
 
 class Editor:
-	def __init__(self, gameMap = None):
+	def __init__(self, gameLevel = None):
 		
-		if gameMap != None:
-			self.map = gameMap
+		if gameLevel != None:
+			self.level = gameLevel
 		else:
-			self.map = Map()
+			self.level = level.Level()
 			
-		self.camera = Camera()
-		self.renderer = Renderer(self.camera, self.map)
+		self.camera = camera.Camera()
+		self.renderer = renderer.Renderer(self.camera, self.level)
 		self.running = True
 		self.mouseDown = False
 		self.mouseX = 0
@@ -100,63 +76,14 @@ class Editor:
 				self.camera.x += 5
 
 			if self.clicked:
-				self.map.addEntity(Wall(self.renderer.sprites["walls"][0], self.absMouseX, self.absMouseY))
+				self.level.addEntity(entities.Wall(self.renderer.sprites["walls"][0], self.absMouseX, self.absMouseY))
 			self.renderer.update()
 
-class Map:
-	def __init__(self):
-		self.width = 1000
-		self.height = 1000
-		self.entities = {"walls":[], "hazards":[]}
-
-	def addEntity(self, entity):
-		if isinstance(entity, Wall):
-			self.entities["walls"].append(entity)
-		elif isinstance(entity, Hazard):
-			self.entities["hazards"].append(entity)
-
-	def getWalls(self):
-		return self.entities["walls"]
-
-	def getHazards(self):
-		return self.entities["hazards"]
-
-class Camera:
-	def __init__(self, width = 500, height = 500, x = 0, y = 0):
-		self.width = width
-		self.height = height
-		self.x = x
-		self.y = y
-		self.calculateEdgeLocations()
-
-	def move(self, x, y):
-		self.x = x
-		self.y = y
-
-	def moveRelative(self, x, y):
-		self.x += x
-		self.y += y
-
-	def calculateEdgeLocations(self):
-		self.right = self.x + self.width
-		self.bottom = self.y + self.height
 
 
-class Entity:
-	def __init__(self, sprite, x, y):
-		self.sprite = sprite
-		self.width, self.height = sprite.get_size()
-		self.x = x
-		self.y = y
-		self.right = x + self.width
-		self.bottom = y + self.height
 
-class Wall(Entity):
-	def __init__(self, sprite, x, y):
-		super().__init__(sprite, x, y)
 
-class Hazard(Entity):
-	def __init__(self, sprite, x, y):
-		super().__init__(sprite, x, y)
+
+
 
 editor = Editor()
