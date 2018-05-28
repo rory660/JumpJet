@@ -5,6 +5,8 @@ class Level:
 		self.width = 1000
 		self.height = 1000
 		self.entities = {"walls":[], "hazards":[]}
+		self.entrance = None
+
 
 	def addEntity(self, entity):
 		if isinstance(entity, entities.Wall):
