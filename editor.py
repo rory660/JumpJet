@@ -4,16 +4,18 @@ import level
 import camera
 import entities
 import time
+import saveManager
 
 MODE_WALLS = 0
 MODE_HAZARDS = 1
 MODE_ENTRANCE = 2
-MODES = 3
+MODE_EXIT = 3
+MODES = 4
 class Editor:
-	def __init__(self, gameLevel = None):
-		
-		if gameLevel != None:
-			self.level = gameLevel
+	def __init__(self):
+		self.saveManager = saveManager.SaveManager()
+		if input("Load level? y/n \n> ") == "y":
+			self.level = self.saveManager.loadLevel(int(input("Enter level id:\n> ")))
 		else:
 			self.level = level.Level()
 			
@@ -26,8 +28,8 @@ class Editor:
 		self.absMouseX = 0
 		self.absMouseY = 0
 		self.clicked = False
-		self.keysDown = {"esc" : False, "w" : False, "a" : False, "s" : False, "d" : False, "q" : False, "e" : False, "z" : False, "x" : False}
-		self.keysPressed = {"esc" : False, "w" : False, "a" : False, "s" : False, "d" : False, "q" : False, "e" : False, "z" : False, "x" : False}
+		self.keysDown = {"esc" : False, "w" : False, "a" : False, "s" : False, "d" : False, "q" : False, "e" : False, "z" : False, "x" : False, "ctrl" : False}
+		self.keysPressed = {"esc" : False, "w" : False, "a" : False, "s" : False, "d" : False, "q" : False, "e" : False, "z" : False, "x" : False, "ctrl" : False}
 		self.currentTime = time.clock()
 		self.timePassed = 0
 		self.mode = MODE_WALLS
@@ -66,6 +68,8 @@ class Editor:
 					self.keysDown["z"] = True
 				elif event.key == pygame.K_x:
 					self.keysDown["x"] = True
+				elif event.key == pygame.K_LCTRL:
+					self.keysDown["ctrl"] = True
 
 			if event.type == pygame.KEYUP:
 				if event.key == pygame.K_ESCAPE:
@@ -95,10 +99,14 @@ class Editor:
 				elif event.key == pygame.K_x:
 					self.keysDown["x"] = False
 					self.keysPressed["x"] = True
+				elif event.key == pygame.K_LCTRL:
+					self.keysDown["ctrl"] = False
+					self.keysPressed["ctrl"] = True
 
 
 	def mainLoop(self):
-		selectedEntity = entities.Wall(self.renderer.sprites["walls"][self.idSelected], int(self.absMouseX/10)*10, int(self.absMouseY/10)*10)
+		selectedEntity = entities.Wall(self.idSelected, int(self.absMouseX/10)*10, int(self.absMouseY/10)*10)
+		lastEntityType = "wall"
 		while(self.running):
 			refreshEntity = False
 			self.getInput()
@@ -109,7 +117,8 @@ class Editor:
 			if self.keysDown["a"]:
 				self.camera.moveRelative(-500 * self.timePassed, 0)
 			if self.keysDown["s"]:
-				self.camera.moveRelative(0, 500 * self.timePassed)
+				if not self.keysDown["ctrl"]:
+					self.camera.moveRelative(0, 500 * self.timePassed)
 			if self.keysDown["d"]:
 				self.camera.moveRelative(500 * self.timePassed, 0)
 			if self.keysPressed["q"]:
@@ -132,34 +141,59 @@ class Editor:
 						refreshEntity = True
 
 			if self.keysPressed["z"]:
-				if self.mode > 0:
-					self.mode -= 1
-					self.idSelected = 0
-					refreshEntity = True
+				if self.keysDown["ctrl"]:
+					self.undo(lastEntityType)
+				else:
+					if self.mode > 0:
+						self.mode -= 1
+						self.idSelected = 0
+						refreshEntity = True
 			if self.keysPressed["x"]:
 				if self.mode < MODES - 1:
 					self.mode += 1
 					self.idSelected = 0
 					refreshEntity = True
 
+			if self.keysPressed["s"]:
+				if self.keysDown["ctrl"]:
+					self.saveManager.saveLevel(self.level)
+
 			if refreshEntity:
 				if self.mode == MODE_WALLS:
-					selectedEntity = entities.Wall(self.renderer.sprites["walls"][self.idSelected], int(self.absMouseX/10)*10, int(self.absMouseY/10)*10)
+					selectedEntity = entities.Wall(self.idSelected, int(self.absMouseX/10)*10, int(self.absMouseY/10)*10)
 				elif self.mode == MODE_HAZARDS:
-					selectedEntity = entities.Hazard(self.renderer.sprites["hazards"][self.idSelected], int(self.absMouseX/10)*10, int(self.absMouseY/10)*10)
+					selectedEntity = entities.Hazard(self.idSelected, int(self.absMouseX/10)*10, int(self.absMouseY/10)*10)
 				elif self.mode == MODE_ENTRANCE:
 					selectedEntity = entities.Entrance(int(self.absMouseX/10)*10, int(self.absMouseY/10)*10)
+				elif self.mode == MODE_EXIT:
+					selectedEntity = entities.Exit(int(self.absMouseX/10)*10, int(self.absMouseY/10)*10)
 			selectedEntity.move(int(self.absMouseX/10)*10, int(self.absMouseY/10)*10)
 
 			if self.clicked:
 				if self.mode == MODE_WALLS:
-					self.level.addEntity(entities.Wall(self.renderer.sprites["walls"][self.idSelected], int(self.absMouseX/10)*10, int(self.absMouseY/10)*10))
+					self.level.addEntity(entities.Wall(self.idSelected, int(self.absMouseX/10)*10, int(self.absMouseY/10)*10))
+					lastEntityType = "wall"
 				elif self.mode == MODE_HAZARDS:
-					self.level.addEntity(entities.Hazard(self.renderer.sprites["hazards"][self.idSelected], int(self.absMouseX/10)*10, int(self.absMouseY/10)*10))
+					self.level.addEntity(entities.Hazard(self.idSelected, int(self.absMouseX/10)*10, int(self.absMouseY/10)*10))
+					lastEntityType = "hazard"
 				elif self.mode == MODE_ENTRANCE:
 					self.level.entrance = entities.Entrance(int(self.absMouseX/10)*10, int(self.absMouseY/10)*10)
+					lastEntityType = "entrance"
+				elif self.mode == MODE_EXIT:
+					self.level.exit = entities.Exit(int(self.absMouseX/10)*10, int(self.absMouseY/10)*10)
+					lastEntityType = "exit"
 			self.renderer.update([selectedEntity])
 			self.timePassed = time.clock() - float(self.currentTime)
 			self.currentTime = time.clock()
+
+	def undo(self, entityType):
+		if entityType == "wall" and not self.level.entities["walls"] == []:
+			self.level.entities["walls"].pop()
+		elif entityType == "hazard" and not self.level.entities["hazards"] == []:
+			self.level.entities["hazards"].pop()
+		elif entityType == "entrance":
+			self.level.entrance = None
+		elif entityType == "exit":
+			self.level.exit = None
 
 editor = Editor()

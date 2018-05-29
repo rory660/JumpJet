@@ -6,6 +6,8 @@ class Level:
 		self.height = 1000
 		self.entities = {"walls":[], "hazards":[]}
 		self.entrance = None
+		self.exit = None
+		self.id = None
 
 
 	def addEntity(self, entity):

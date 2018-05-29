@@ -21,7 +21,6 @@ class Renderer:
 		self.display.fill((0,0,0))
 		if self.editorMode:
 			pygame.draw.rect(self.display, (0,150,0), pygame.Rect(-self.camera.x, -self.camera.y, self.level.width, self.level.height))
-		
 
 		for wall in self.level.getWalls():
 			relativeX = wall.x - self.camera.x
@@ -40,6 +39,10 @@ class Renderer:
 			relativeX = self.level.entrance.x - self.camera.x
 			relativeY = self.level.entrance.y - self.camera.y
 			self.display.blit(self.level.entrance.sprite, (relativeX, relativeY))
+		if self.level.exit != None:
+			relativeX = self.level.exit.x - self.camera.x
+			relativeY = self.level.exit.y - self.camera.y
+			self.display.blit(self.level.exit.sprite, (relativeX, relativeY))
 		pygame.display.update()
 
 		frameTime = time.clock() - self.currentTime
