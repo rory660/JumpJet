@@ -18,6 +18,8 @@ class Editor:
 			self.level = self.saveManager.loadLevel(int(input("Enter level id:\n> ")))
 		else:
 			self.level = level.Level()
+			self.level.width = int(input("Enter width:\n> "))
+			self.level.height = int(input("Enter height:\n> "))
 			
 		self.camera = camera.Camera()
 		self.renderer = renderer.Renderer(self.camera, self.level, editorMode = True)

@@ -23,29 +23,29 @@ class Renderer:
 			pygame.draw.rect(self.display, (0,150,0), pygame.Rect(-self.camera.x, -self.camera.y, self.level.width, self.level.height))
 
 		for wall in self.level.getWalls():
-			relativeX = wall.x - self.camera.x
-			relativeY = wall.y - self.camera.y
-			self.display.blit(wall.sprite, (relativeX, relativeY))
+			self.drawEntity(wall)
 		for hazard in self.level.getHazards():
-			relativeX = hazard.x - self.camera.x
-			relativeY = hazard.y - self.camera.y
-			self.display.blit(hazard.sprite, (relativeX, relativeY))
+			self.drawEntity(hazard)
 
 		for entity in entitiesToDraw:
-			relativeX = entity.x - self.camera.x
-			relativeY = entity.y - self.camera.y
-			self.display.blit(entity.sprite, (relativeX, relativeY))
+			self.drawEntity(entity)
+
 		if self.level.entrance != None:
-			relativeX = self.level.entrance.x - self.camera.x
-			relativeY = self.level.entrance.y - self.camera.y
-			self.display.blit(self.level.entrance.sprite, (relativeX, relativeY))
+			self.drawEntity(self.level.entrance)
 		if self.level.exit != None:
-			relativeX = self.level.exit.x - self.camera.x
-			relativeY = self.level.exit.y - self.camera.y
-			self.display.blit(self.level.exit.sprite, (relativeX, relativeY))
+			self.drawEntity(self.level.exit)
+
+		if not self.editorMode:
+			if self.level.player != None:
+				self.drawEntity(self.level.player)
 		pygame.display.update()
 
 		frameTime = time.clock() - self.currentTime
 		if frameTime < 1000.0 / self.maxFPS:
 			time.sleep((1000.0 / self.maxFPS - frameTime) / 1000.0)
 		self.currentTime = time.clock()
+
+	def drawEntity(self, entity):
+		relativeX = entity.x - self.camera.x
+		relativeY = entity.y - self.camera.y
+		self.display.blit(entity.sprite, (relativeX, relativeY))

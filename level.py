@@ -8,7 +8,7 @@ class Level:
 		self.entrance = None
 		self.exit = None
 		self.id = None
-
+		self.player = None
 
 	def addEntity(self, entity):
 		if isinstance(entity, entities.Wall):

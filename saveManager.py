@@ -45,8 +45,8 @@ class SaveManager:
 							continue
 						if readMode == MODE_DIM:
 							dims = [int(dim) for dim in line.split(",")]
-							loadedLevel.x = dims[0]
-							loadedLevel.y = dims[1]
+							loadedLevel.width = dims[0]
+							loadedLevel.height = dims[1]
 						elif readMode == MODE_ENTS:
 							entInfo = line.split(",")
 							if entInfo[0] == "wall":
@@ -54,7 +54,7 @@ class SaveManager:
 							elif entInfo[0] == "hazard":
 							 	loadedLevel.addEntity(entities.Hazard(int(entInfo[1]), int(entInfo[2]), int(entInfo[3])))
 							elif entInfo[0] == "entrance":
-							 	loadedLevel.addEntity(entities.Entrance(int(entInfo[1]), int(entInfo[2])))
+							 	loadedLevel.entrance = entities.Entrance(int(entInfo[1]), int(entInfo[2]))
 							elif entInfo[0] == "exit":
-							 	loadedLevel.addEntity(entities.Exit(int(entInfo[1]), int(entInfo[2])))
+							 	loadedLevel.exit = entities.Exit(int(entInfo[1]), int(entInfo[2]))
 		return loadedLevel
