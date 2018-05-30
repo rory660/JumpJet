@@ -60,83 +60,103 @@ class Player(Entity):
 		super().__init__(pygame.image.load("./other/guy.png"), x, y)
 		self.parentLevel = parentLevel
 		self.speed = [0, 0]
-		self.acceleration = [0, 0]
 		self.inAir = False
-		self.maxRunSpeed = 400
+
 		self.runAcceleration = 3000
-		self.airAcceleration = 1200
-		self.slowdownRate = 2000
-		self.maxAirSpeed = 1000
 		self.running = 0
 		self.jumping = False
-		self.jumpTimer = 0.3
-		self.gravity = 3000
+		
+
+		self.runAcceleration = 1000
+		self.boostSpeed = 1000
+		self.runSpeed = 400
+		self.fallSpeed = 0
+		self.hBoosting = 0
+		self.vBoosting = 0
+		self.jumpSpeed = 800
+		self.boostDistance = 50
+
+		self.airHAcceleration = 1000
+		self.hAcceleration = 2000
+		self.vAcceleration = 3000
+
 
 	def calculateMovement(self, timeLength):
-		if self.inAir and not self.jumping:
-			self.jumpTimer = 0
-		if self.jumpTimer > 0 and self.jumping:
-			self.inAir = True
-			self.speed[1] = -800
-			self.jumpTimer -= timeLength
-		if not self.inAir:
-			self.jumpTimer = 0.3
-			if self.speed[0] > 0 or self.running == 1 and self.speed[0] == 0:
-				self.acceleration[0] = -self.slowdownRate
-			if self.speed[0] < 0 or self.running == -1 and self.speed[0] == 0:
-				self.acceleration[0] = self.slowdownRate
+		self.hDesiredSpeed = 0
+		self.vDesiredSpeed = 1000
+		if self.running != 0:
+			self.hDesiredSpeed = self.runSpeed * self.running
+			self.speed[0] += self.runAcceleration * self.running * timeLength
 
-			if self.running != 0:
-				self.acceleration[0] += self.running * self.runAcceleration
-				self.speed[0] += self.acceleration[0] * timeLength
-				if self.speed[0] < -self.maxRunSpeed:
-					self.speed[0] = -self.maxRunSpeed
-				elif self.speed[0] > self.maxRunSpeed:
-					self.speed[0] = self.maxRunSpeed
-			else:
-				if self.speed[0] < 0:
-					self.speed[0] += self.acceleration[0] * timeLength
-					if self.speed[0] > 0:
-						self.stop()
-				elif self.speed[0] > 0:
-					self.speed[0] += self.acceleration[0] * timeLength
-					if self.speed[0] < 0:
-						self.stop()
-		else:
-			if self.running > 0:
-				self.acceleration[0] = self.airAcceleration
-			elif self.running < 0:
-				self.acceleration[0] = -self.airAcceleration
-			else:
-				self.acceleration[0] = 0
-			self.speed[0] += self.acceleration[0] * timeLength
-			if self.speed[0] > self.maxRunSpeed:
-				self.speed[0] = self.maxRunSpeed
-			elif self.speed[0] < -self.maxRunSpeed:
-				self.speed[0] = -self.maxRunSpeed
+		if self.hBoosting != 0:
+			self.speed[0] = self.hBoosting * self.boostSpeed
 
-		self.acceleration[1] = self.gravity
-		self.speed[1] += self.acceleration[1] * timeLength
-		if self.speed[1] > self.maxAirSpeed:
-			self.speed[1] = self.maxAirSpeed
-		elif self.speed[1] < -self.maxAirSpeed:
-			self.speed[1] = -self.maxAirSpeed
+		if self.vBoosting != 0:
+			self.speed[1] = self.vBoosting * self.boostSpeed
 
-		self.moveRelative(self.speed[0] * timeLength, self.speed[1] * timeLength)
+		if self.jumping:
+			self.speed[1] = -self.jumpSpeed
+
+		hAccel = self.hAcceleration
+		if self.inAir:
+			hAccel = self.airHAcceleration
+		if self.speed[0] < self.hDesiredSpeed:
+			self.speed[0] += hAccel * timeLength
+			if self.speed[0] > self.hDesiredSpeed:
+				self.speed[0] = self.hDesiredSpeed
+		elif self.speed[0] > self.hDesiredSpeed:
+			self.speed[0] -= hAccel * timeLength
+			if self.speed[0] < self.hDesiredSpeed:
+				self.speed[0] = self.hDesiredSpeed
+
+		if self.speed[1] < self.vDesiredSpeed:
+			self.speed[1] += self.vAcceleration * timeLength
+			if self.speed[1] > self.vDesiredSpeed:
+				self.speed[1] = self.vDesiredSpeed
+		elif self.speed[1] > self.vDesiredSpeed:
+			self.speed[1] -= self.vAcceleration * timeLength
+			if self.speed[1] < self.vDesiredSpeed:
+				self.speed[1] = self.vDesiredSpeed
+
+		
+
+		xMove = self.speed[0] * timeLength
+		yMove = self.speed[1] * timeLength
+
+		if self.hBoosting != 0:
+			xMove += self.boostDistance * self.hBoosting
+		elif self.vBoosting != 0:
+			yMove += self.boostDistance * self.vBoosting
+
 		self.running = 0
+		self.hBoosting = 0
+		self.vBoosting = 0
+		self.jumping = False
+
+		self.moveRelative(xMove, yMove)
 
 	def runLeft(self):
 		self.running = -1
 	def runRight(self):
 		self.running = 1
 
+	def boostLeft(self):
+		self.hBoosting = -1
+
+	def boostRight(self):
+		self.hBoosting = 1
+
+	def boostDown(self):
+		self.vBoosting = 1
+
+	def boostUp(self):
+		self.vBoosting = -1
+
 	def stop(self, horizontal = True, vertical = True):
 		if horizontal:
 			self.speed[0] = 0
-			self.acceleration[0] = 0
 		if vertical:
-			self.speed[0] = 0
-			self.acceleration[0] = 0
+			self.speed[1] = 0
 
 	def moveRelative(self, x, y):
 		self.x += x
@@ -147,7 +167,7 @@ class Player(Entity):
 			checkingCollision = False
 			for wall in self.parentLevel.getWalls():
 				if self.isCollidingWith(wall):
-					self.speed[0] = 0
+					self.stop(vertical = False)
 					checkingCollision = True
 					if x < 0:
 						self.x = wall.right
@@ -164,6 +184,7 @@ class Player(Entity):
 			checkingCollision = False
 			for wall in self.parentLevel.getWalls():
 				if self.isCollidingWith(wall):
+					self.stop(horizontal = False)
 					self.speed[1] = 0
 					checkingCollision = True
 					if y < 0:

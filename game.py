@@ -20,8 +20,9 @@ class Game:
 		self.absMouseX = 0
 		self.absMouseY = 0
 		self.clicked = False
-		self.keysDown = {"esc" : False, "w" : False, "a" : False, "s" : False, "d" : False, "q" : False, "e" : False, "z" : False, "x" : False, "ctrl" : False, "space" : False}
-		self.keysPressed = {"esc" : False, "w" : False, "a" : False, "s" : False, "d" : False, "q" : False, "e" : False, "z" : False, "x" : False, "ctrl" : False, "space" : False}
+		self.keysDown = {"esc" : False, "w" : False, "a" : False, "s" : False, "d" : False, "q" : False, "e" : False, "z" : False, "x" : False, "ctrl" : False, "space" : False, "left" : False, "right" : False, "up" : False, "down" : False}
+		self.keysPressed = {"esc" : False, "w" : False, "a" : False, "s" : False, "d" : False, "q" : False, "e" : False, "z" : False, "x" : False, "ctrl" : False, "space" : False, "left" : False, "right" : False, "up" : False, "down" : False}
+		self.keysPressedDown = {"esc" : False, "w" : False, "a" : False, "s" : False, "d" : False, "q" : False, "e" : False, "z" : False, "x" : False, "ctrl" : False, "space" : False, "left" : False, "right" : False, "up" : False, "down" : False}
 		self.currentTime = time.clock()
 		self.timePassed = 0
 		self.mainLoop()
@@ -32,6 +33,7 @@ class Game:
 		self.absMouseY = self.mouseY + self.camera.y
 		self.clicked = False
 		self.keysPressed = dict.fromkeys(self.keysPressed, False)
+		self.keysPressedDown = dict.fromkeys(self.keysPressed, False)
 		for event in pygame.event.get():
 			if event.type == pygame.MOUSEBUTTONDOWN:
 				self.mouseDown = True
@@ -42,26 +44,49 @@ class Game:
 			if event.type == pygame.KEYDOWN:
 				if event.key == pygame.K_ESCAPE:
 					self.keysDown["esc"] = True
+					self.keysPressedDown["esc"] = True
 				elif event.key == pygame.K_w:
 					self.keysDown["w"] = True
+					self.keysPressedDown["w"] = True
 				elif event.key == pygame.K_a:
 					self.keysDown["a"] = True
+					self.keysPressedDown["a"] = True
 				elif event.key == pygame.K_s:
 					self.keysDown["s"] = True
+					self.keysPressedDown["s"] = True
 				elif event.key == pygame.K_d:
 					self.keysDown["d"] = True
+					self.keysPressedDown["d"] = True
 				elif event.key == pygame.K_q:
 					self.keysDown["q"] = True
+					self.keysPressedDown["q"] = True
 				elif event.key == pygame.K_e:
 					self.keysDown["e"] = True
+					self.keysPressedDown["e"] = True
 				elif event.key == pygame.K_z:
 					self.keysDown["z"] = True
+					self.keysPressedDown["z"] = True
 				elif event.key == pygame.K_x:
 					self.keysDown["x"] = True
+					self.keysPressedDown["x"] = True
 				elif event.key == pygame.K_LCTRL:
 					self.keysDown["ctrl"] = True
+					self.keysPressedDown["ctrl"] = True
 				elif event.key == pygame.K_SPACE:
 					self.keysDown["space"] = True
+					self.keysPressedDown["space"] = True
+				elif event.key == pygame.K_UP:
+					self.keysDown["up"] = True
+					self.keysPressedDown["up"] = True
+				elif event.key == pygame.K_DOWN:
+					self.keysDown["down"] = True
+					self.keysPressedDown["down"] = True
+				elif event.key == pygame.K_LEFT:
+					self.keysDown["left"] = True
+					self.keysPressedDown["left"] = True
+				elif event.key == pygame.K_RIGHT:
+					self.keysDown["right"] = True
+					self.keysPressedDown["right"] = True
 
 			if event.type == pygame.KEYUP:
 				if event.key == pygame.K_ESCAPE:
@@ -97,6 +122,18 @@ class Game:
 				elif event.key == pygame.K_SPACE:
 					self.keysDown["space"] = False
 					self.keysPressed["space"] = True
+				elif event.key == pygame.K_UP:
+					self.keysDown["up"] = False
+					self.keysPressed["up"] = True
+				elif event.key == pygame.K_DOWN:
+					self.keysDown["down"] = False
+					self.keysPressed["down"] = True
+				elif event.key == pygame.K_LEFT:
+					self.keysDown["left"] = False
+					self.keysPressed["left"] = True
+				elif event.key == pygame.K_RIGHT:
+					self.keysDown["right"] = False
+					self.keysPressed["right"] = True
 
 	def mainLoop(self):
 		if self.level.player == None:
@@ -108,13 +145,19 @@ class Game:
 
 			if self.keysDown["a"]:
 				self.level.player.runLeft()
-
 			if self.keysDown["d"]:
 				self.level.player.runRight()
-			if self.keysDown["space"]:
+			if self.keysPressedDown["space"]:
 				self.level.player.jumping = True
-			else:
-				self.level.player.jumping = False
+
+			if self.keysPressedDown["left"]:
+				self.level.player.boostLeft()
+			if self.keysPressedDown["right"]:
+				self.level.player.boostRight()
+			if self.keysPressedDown["up"]:
+				self.level.player.boostUp()
+			if self.keysPressedDown["down"]:
+				self.level.player.boostDown()
 
 			
 			
