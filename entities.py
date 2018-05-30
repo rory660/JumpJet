@@ -82,11 +82,16 @@ class Player(Entity):
 
 
 	def calculateMovement(self, timeLength):
+		print(self.inAir)
 		self.hDesiredSpeed = 0
 		self.vDesiredSpeed = 1000
 		if self.running != 0:
 			self.hDesiredSpeed = self.runSpeed * self.running
-			self.speed[0] += self.runAcceleration * self.running * timeLength
+			if not self.inAir:
+				if self.speed[0] < self.hDesiredSpeed:
+					self.speed[0] += self.runAcceleration * timeLength
+				elif self.speed[0] > self.hDesiredSpeed:
+					self.speed[0] -= self.runAcceleration * timeLength
 
 		if self.hBoosting != 0:
 			self.speed[0] = self.hBoosting * self.boostSpeed

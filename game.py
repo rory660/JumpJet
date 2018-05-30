@@ -163,6 +163,9 @@ class Game:
 			
 
 			self.level.player.calculateMovement(self.timePassed)
+			for hazard in self.level.entities["hazards"]:
+				if self.level.player.isCollidingWith(hazard):
+					self.level.player.move(self.level.entrance.x, self.level.entrance.y - 80)
 			if self.level.player.isOutOfBounds():
 				self.level.player.move(self.level.entrance.x, self.level.entrance.y - 80)
 			self.camera.moveCenter(self.level.player.center[0], self.level.player.center[1])
