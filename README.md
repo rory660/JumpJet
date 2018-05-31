@@ -1,4 +1,5 @@
 # JumpJet (working title)
+![screenshot](https://user-images.githubusercontent.com/30571778/40794783-18333c7c-64f8-11e8-92fa-c9b667f0a3d2.png)
 Platformer game made with Pygame
 
 ## Requirements
