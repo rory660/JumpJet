@@ -148,7 +148,7 @@ class Game:
 			if self.keysDown["d"]:
 				self.level.player.runRight()
 			if self.keysPressedDown["space"]:
-				self.level.player.jumping = True
+				self.level.player.jump()
 
 			if self.keysPressedDown["left"]:
 				self.level.player.boostLeft()

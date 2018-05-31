@@ -1,5 +1,6 @@
 import pygame
 import os
+import animation
 
 def loadSpritesFromFolder(path):
 	return [pygame.image.load(path + fileName) for fileName in os.listdir(path)]
@@ -7,6 +8,7 @@ sprites = {"walls":loadSpritesFromFolder("./walls/"), "hazards":loadSpritesFromF
 class Entity:
 	def __init__(self, sprite, x, y):
 		self.sprite = sprite
+		self.currentAnimation = None
 		self.x = x
 		self.y = y
 		self.width, self.height = sprite.get_size()
@@ -36,6 +38,11 @@ class Entity:
 		if self.x < entity.right and self.right > entity.x:
 			if self.y < entity.bottom and self.bottom > entity.y:
 				return True
+
+	def setAnimation(self, animation):
+		if self.currentAnimation != None:
+			self.currentAnimation.reset()
+		self.currentAnimation = animation
 
 class Wall(Entity):
 	def __init__(self, spriteId, x, y):
@@ -80,9 +87,13 @@ class Player(Entity):
 		self.hAcceleration = 2000
 		self.vAcceleration = 3000
 
+		self.idleAnimation = animation.Animation()
+		self.idleAnimation.addFrame(pygame.image.load("./player/idle1.png"), 0.5)
+		self.idleAnimation.addFrame(pygame.image.load("./player/idle2.png"), 0.5)
+		self.setAnimation(self.idleAnimation)
+
 
 	def calculateMovement(self, timeLength):
-		print(self.inAir)
 		self.hDesiredSpeed = 0
 		self.vDesiredSpeed = 1000
 		if self.running != 0:
@@ -95,6 +106,8 @@ class Player(Entity):
 
 		if self.hBoosting != 0:
 			self.speed[0] = self.hBoosting * self.boostSpeed
+			if self.inAir:
+				self.speed[1] -= 400
 
 		if self.vBoosting != 0:
 			self.speed[1] = self.vBoosting * self.boostSpeed
@@ -156,6 +169,10 @@ class Player(Entity):
 
 	def boostUp(self):
 		self.vBoosting = -1
+
+	def jump(self):
+		if not self.inAir:
+			self.jumping = True
 
 	def stop(self, horizontal = True, vertical = True):
 		if horizontal:

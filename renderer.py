@@ -13,6 +13,7 @@ class Renderer:
 		self.currentTime = time.clock()
 		self.maxFPS = 60
 		self.level = gameLevel
+		self.frameTime = 0
 
 	def loadSpritesFromFolder(self, path):
 		return [pygame.image.load(path + fileName) for fileName in os.listdir(path)]
@@ -40,12 +41,15 @@ class Renderer:
 				self.drawEntity(self.level.player)
 		pygame.display.update()
 
-		frameTime = time.clock() - self.currentTime
-		if frameTime < 1000.0 / self.maxFPS:
-			time.sleep((1000.0 / self.maxFPS - frameTime) / 1000.0)
+		self.frameTime = time.clock() - self.currentTime
+		if self.frameTime < 1000.0 / self.maxFPS:
+			time.sleep((1000.0 / self.maxFPS - self.frameTime) / 1000.0)
 		self.currentTime = time.clock()
 
 	def drawEntity(self, entity):
 		relativeX = entity.x - self.camera.x
 		relativeY = entity.y - self.camera.y
-		self.display.blit(entity.sprite, (relativeX, relativeY))
+		if entity.currentAnimation != None:
+			self.display.blit(entity.currentAnimation.getCurrentFrame(self.frameTime), (relativeX, relativeY))
+		else:
+			self.display.blit(entity.sprite, (relativeX, relativeY))
