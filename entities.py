@@ -44,6 +44,9 @@ class Entity:
 			self.currentAnimation.reset()
 		self.currentAnimation = animation
 
+	def isClicked(self, mouseX, mouseY):
+		return mouseX >= self.x and mouseX <= self.right and mouseY >= self.y and mouseY <= self.bottom
+
 class Wall(Entity):
 	def __init__(self, spriteId, x, y):
 		self.spriteId = spriteId

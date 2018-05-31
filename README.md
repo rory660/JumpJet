@@ -22,3 +22,4 @@ Run editor.py with Python 3. You will be prompted to either load a level by id, 
 - `z` and `x` to switch placement mode. Current placement modes include walls, hazards, entrance and exit.
 - `q` and `e` to switch object within a placement mode.
 - `ctrl-s` to save the level. If a level has been loaded, it will be overwritten with a save. Otherwise, a new file will be created for the level.
+- `ctrl-z` to undo previous edit.

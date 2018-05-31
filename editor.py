@@ -10,7 +10,8 @@ MODE_WALLS = 0
 MODE_HAZARDS = 1
 MODE_ENTRANCE = 2
 MODE_EXIT = 3
-MODES = 4
+MODE_DELETE = 4
+MODES = 5
 class Editor:
 	def __init__(self):
 		self.saveManager = saveManager.SaveManager()
@@ -36,6 +37,8 @@ class Editor:
 		self.timePassed = 0
 		self.mode = MODE_WALLS
 		self.idSelected = 0
+		pygame.font.init()
+		self.uiFont = pygame.font.SysFont("Arial", 30)
 		self.mainLoop()
 
 	def getInput(self):
@@ -111,6 +114,8 @@ class Editor:
 		lastEntityType = "wall"
 		while(self.running):
 			refreshEntity = False
+			self.renderList = []
+			self.uiRenderList = []
 			self.getInput()
 			if self.keysDown["esc"]:
 				self.running = False
@@ -169,7 +174,10 @@ class Editor:
 					selectedEntity = entities.Entrance(int(self.absMouseX/10)*10, int(self.absMouseY/10)*10)
 				elif self.mode == MODE_EXIT:
 					selectedEntity = entities.Exit(int(self.absMouseX/10)*10, int(self.absMouseY/10)*10)
-			selectedEntity.move(int(self.absMouseX/10)*10, int(self.absMouseY/10)*10)
+				elif self.mode == MODE_DELETE:
+					selectedEntity = None
+			if selectedEntity != None:
+				selectedEntity.move(int(self.absMouseX/10)*10, int(self.absMouseY/10)*10)
 
 			if self.clicked:
 				if self.mode == MODE_WALLS:
@@ -184,7 +192,42 @@ class Editor:
 				elif self.mode == MODE_EXIT:
 					self.level.exit = entities.Exit(int(self.absMouseX/10)*10, int(self.absMouseY/10)*10)
 					lastEntityType = "exit"
-			self.renderer.update([selectedEntity])
+				elif self.mode == MODE_DELETE:
+					deleted = False
+					for hazard in self.level.entities["hazards"][::-1]:
+						if deleted:
+							break
+						if hazard.isClicked(self.absMouseX, self.absMouseY):
+							self.level.entities["walls"].remove(hazard)
+							deleted = True
+					for wall in self.level.entities["walls"][::-1]:
+						if deleted:
+							break
+						if wall.isClicked(self.absMouseX, self.absMouseY):
+							self.level.entities["walls"].remove(wall)
+							deleted = True
+
+					if self.level.entrance.isClicked(self.absMouseX, self.absMouseY) and not deleted:
+						self.level.entrance = None
+						deleted = True
+					if self.level.exit.isClicked(self.absMouseX, self.absMouseY) and not deleted:
+						self.level.exit = None
+						deleted = True
+
+			if selectedEntity != None:
+				self.renderList.append(selectedEntity)
+
+			if self.mode == MODE_WALLS:
+				self.renderText("Mode: Walls")
+			elif self.mode == MODE_HAZARDS:
+				self.renderText("Mode: Hazards")
+			elif self.mode == MODE_ENTRANCE:
+				self.renderText("Mode: Entrance")
+			elif self.mode == MODE_EXIT:
+				self.renderText("Mode: Exit")
+			elif self.mode == MODE_DELETE:
+				self.renderText("Mode: Delete")
+			self.renderer.update(self.renderList, self.uiRenderList)
 			self.timePassed = time.clock() - float(self.currentTime)
 			self.currentTime = time.clock()
 
@@ -197,5 +240,9 @@ class Editor:
 			self.level.entrance = None
 		elif entityType == "exit":
 			self.level.exit = None
+
+	def renderText(self, text):
+		textRender = self.uiFont.render(text, True, (255,255,255), (0,0,0))
+		self.uiRenderList.append(entities.Entity(textRender, 10, 10))
 
 editor = Editor()

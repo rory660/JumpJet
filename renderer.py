@@ -18,7 +18,7 @@ class Renderer:
 	def loadSpritesFromFolder(self, path):
 		return [pygame.image.load(path + fileName) for fileName in os.listdir(path)]
 
-	def update(self, entitiesToDraw = []):
+	def update(self, entitiesToDraw = [], uiToDraw = []):
 		self.display.fill((0,0,0))
 		if self.editorMode:
 			pygame.draw.rect(self.display, (0,150,0), pygame.Rect(-self.camera.x, -self.camera.y, self.level.width, self.level.height))
@@ -35,6 +35,9 @@ class Renderer:
 			self.drawEntity(self.level.entrance)
 		if self.level.exit != None:
 			self.drawEntity(self.level.exit)
+
+		for uiEntity in uiToDraw:
+			self.drawUIEntity(uiEntity)
 
 		if not self.editorMode:
 			if self.level.player != None:
@@ -53,3 +56,6 @@ class Renderer:
 			self.display.blit(entity.currentAnimation.getCurrentFrame(self.frameTime), (relativeX, relativeY))
 		else:
 			self.display.blit(entity.sprite, (relativeX, relativeY))
+
+	def drawUIEntity(self, entity):
+		self.display.blit(entity.sprite, (entity.x, entity.y))
