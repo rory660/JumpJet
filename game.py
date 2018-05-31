@@ -165,18 +165,26 @@ class Game:
 			self.level.player.calculateMovement(self.timePassed)
 			for hazard in self.level.entities["hazards"]:
 				if self.level.player.isCollidingWith(hazard):
+					self.level.player.stop()
 					self.level.player.move(self.level.entrance.x, self.level.entrance.y - 80)
 			if self.level.player.isOutOfBounds():
+				self.level.player.stop()
 				self.level.player.move(self.level.entrance.x, self.level.entrance.y - 80)
 			self.camera.moveCenter(self.level.player.center[0], self.level.player.center[1])
-			if self.camera.x < 0:
-				self.camera.x = 0
-			if self.camera.y < 0:
-				self.camera.y = 0
-			if self.camera.right > self.level.width:
-				self.camera.x = self.level.width - self.camera.width
-			if self.camera.bottom > self.level.height:
-				self.camera.y = self.level.height - self.camera.height
+			if self.camera.width >= self.level.width:
+				self.camera.moveCenter(self.level.width/2, self.camera.y + self.camera.height / 2)
+			else:
+				if self.camera.x < 0:
+					self.camera.x = 0
+				elif self.camera.right > self.level.width:
+					self.camera.x = self.level.width - self.camera.width
+			if self.camera.height >= self.level.height:
+				self.camera.moveCenter(self.camera.x + self.camera.width / 2, self.level.height/2)
+			else:
+				if self.camera.y < 0:
+					self.camera.y = 0
+				elif self.camera.bottom > self.level.height:
+					self.camera.y = self.level.height - self.camera.height
 			self.renderer.update()
 			self.timePassed = time.clock() - float(self.currentTime)
 			self.currentTime = time.clock()
