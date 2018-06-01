@@ -9,7 +9,8 @@ import saveManager
 class Game:
 	def __init__(self):
 		self.saveManager = saveManager.SaveManager()
-		self.level = self.saveManager.loadLevel(int(input("Enter level id:\n> ")))
+		self.levelID = int(input("Enter level id:\n> "))
+		self.level = self.saveManager.loadLevel(self.levelID)
 			
 		self.camera = camera.Camera()
 		self.renderer = renderer.Renderer(self.camera, self.level, editorMode = False)
@@ -165,11 +166,14 @@ class Game:
 			self.level.player.calculateMovement(self.timePassed)
 			for hazard in self.level.entities["hazards"]:
 				if self.level.player.isCollidingWith(hazard):
-					self.level.player.stop()
-					self.level.player.move(self.level.entrance.x, self.level.entrance.y - 80)
+					self.respawnPlayer()
 			if self.level.player.isOutOfBounds():
-				self.level.player.stop()
-				self.level.player.move(self.level.entrance.x, self.level.entrance.y - 80)
+				self.respawnPlayer()
+			if self.level.player.isCollidingWith(self.level.exit):
+				self.levelID += 1
+				self.level = self.saveManager.loadLevel(self.levelID)
+				self.renderer.level = self.level
+				self.level.player = entities.Player(self.level, self.level.entrance.x, self.level.entrance.y - 80)
 			self.camera.moveCenter(self.level.player.center[0], self.level.player.center[1])
 			if self.camera.width >= self.level.width:
 				self.camera.moveCenter(self.level.width/2, self.camera.y + self.camera.height / 2)
@@ -188,6 +192,10 @@ class Game:
 			self.renderer.update()
 			self.timePassed = time.clock() - float(self.currentTime)
 			self.currentTime = time.clock()
+
+	def respawnPlayer(self):
+		self.level.player.stop()
+		self.level.player.move(self.level.entrance.x, self.level.entrance.y - 80)
 
 
 game = Game()
