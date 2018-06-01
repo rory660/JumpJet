@@ -8,6 +8,7 @@ SHAPE_CIRCLE = 1
 def loadSpritesFromFolder(path):
 	return [pygame.image.load(path + fileName) for fileName in os.listdir(path)]
 sprites = {"walls":loadSpritesFromFolder("./walls/"), "hazards":loadSpritesFromFolder("./hazards/")}
+hazardAnimations = [loadSpritesFromFolder("./hazardAnimations/" + directory + "/") for directory in os.listdir("./hazardAnimations")]
 class Entity:
 	def __init__(self, sprite, x, y, shape = SHAPE_SQUARE, movingOnPath = False):
 		self.sprite = sprite
@@ -37,11 +38,15 @@ class Entity:
 	def moveOnPath(self, timeLength):
 		target = self.path[self.movingTarget]
 		oldX = self.x
+		oldY = self.y
 		xDistance = target[0] - self.x
 		yDistance = target[1] - self.y
-		xMoveAmount = int(xDistance / abs(xDistance + yDistance) * self.movingSpeed * timeLength)
-		self.lastMoveDistance = xMoveAmount
-		yMoveAmount = int(yDistance / abs(xDistance + yDistance) * self.movingSpeed * timeLength)
+		xMoveAmount = 0
+		yMoveAmount = 0
+		if xDistance + yDistance != 0:
+			xMoveAmount = int(xDistance / abs(xDistance + yDistance) * self.movingSpeed * timeLength)
+			self.lastMoveDistance = xMoveAmount
+			yMoveAmount = int(yDistance / abs(xDistance + yDistance) * self.movingSpeed * timeLength)
 		if xMoveAmount > 0:
 			self.pathMoveDir[0] = 1
 		elif xMoveAmount < 0:
@@ -51,11 +56,18 @@ class Entity:
 		elif yMoveAmount < 0:
 			self.pathMoveDir[1] = -1
 		self.moveRelative(xMoveAmount, yMoveAmount)
-		if (oldX < target[0] and self.x >= target[0]) or (oldX > target[0] and self.x <= target[0]):
-			if self.movingTarget == 1:
-				self.movingTarget = 0
-			else:
-				self.movingTarget = 1
+		if self.pathMoveDir[0] != 0:
+			if (oldX < target[0] and self.x >= target[0]) or (oldX > target[0] and self.x <= target[0]):
+				if self.movingTarget == 1:
+					self.movingTarget = 0
+				else:
+					self.movingTarget = 1
+		else:
+			if (oldY < target[1] and self.y >= target[1]) or (oldY > target[1] and self.y <= target[1]):
+				if self.movingTarget == 1:
+					self.movingTarget = 0
+				else:
+					self.movingTarget = 1
 
 	def moveRelative(self, x, y):
 		self.x += x
@@ -98,7 +110,10 @@ class Wall(Entity):
 class Hazard(Entity):
 	def __init__(self, spriteId, x, y):
 		self.spriteId = spriteId
-		super().__init__(sprites["hazards"][spriteId], x, y, shape = SHAPE_CIRCLE)
+		super().__init__(sprites["hazards"][spriteId], x, y)
+		if hazardAnimations[spriteId] != []:
+			anim = animation.Animation(hazardAnimations[spriteId], [0.2 for x in hazardAnimations[spriteId]])
+			self.setAnimation(anim)
 
 class Entrance(Entity):
 	def __init__(self, x, y):
@@ -286,7 +301,8 @@ class Player(Entity):
 						elif y > 0:
 							self.y = wall.y - self.height
 							self.inAir = False
-							self.moveRelative(wall.lastMoveDistance, 0, checkColY = False)
+							if wall.lastMoveDistance != 0:
+								self.moveRelative(wall.lastMoveDistance, 0, checkColY = False)
 					self.calculateEdgeLocations()		
 
 	def isOutOfBounds(self):

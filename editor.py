@@ -36,6 +36,7 @@ class Editor:
 		self.keysPressed = {"esc" : False, "w" : False, "a" : False, "s" : False, "d" : False, "q" : False, "e" : False, "z" : False, "x" : False, "ctrl" : False}
 		self.currentTime = time.clock()
 		self.timePassed = 0
+		self.gridLock = 4
 		self.mode = MODE_WALLS
 		self.idSelected = 0
 		pygame.font.init()
@@ -111,7 +112,7 @@ class Editor:
 
 
 	def mainLoop(self):
-		selectedEntity = entities.Wall(self.idSelected, int(self.absMouseX/10)*10, int(self.absMouseY/10)*10)
+		selectedEntity = entities.Wall(self.idSelected, int(self.absMouseX/self.gridLock)*self.gridLock, int(self.absMouseY/self.gridLock)*self.gridLock)
 		lastEntityType = "wall"
 		clickedEntity = None
 		entityIsClicked = False
@@ -173,20 +174,20 @@ class Editor:
 			if refreshEntity:
 				clickedEntity = None
 				if self.mode == MODE_WALLS:
-					selectedEntity = entities.Wall(self.idSelected, int(self.absMouseX/10)*10, int(self.absMouseY/10)*10)
+					selectedEntity = entities.Wall(self.idSelected, int(self.absMouseX/self.gridLock)*self.gridLock, int(self.absMouseY/self.gridLock)*self.gridLock)
 				elif self.mode == MODE_HAZARDS:
-					selectedEntity = entities.Hazard(self.idSelected, int(self.absMouseX/10)*10, int(self.absMouseY/10)*10)
+					selectedEntity = entities.Hazard(self.idSelected, int(self.absMouseX/self.gridLock)*self.gridLock, int(self.absMouseY/self.gridLock)*self.gridLock)
 				elif self.mode == MODE_ENTRANCE:
-					selectedEntity = entities.Entrance(int(self.absMouseX/10)*10, int(self.absMouseY/10)*10)
+					selectedEntity = entities.Entrance(int(self.absMouseX/self.gridLock)*self.gridLock, int(self.absMouseY/self.gridLock)*self.gridLock)
 				elif self.mode == MODE_EXIT:
-					selectedEntity = entities.Exit(int(self.absMouseX/10)*10, int(self.absMouseY/10)*10)
+					selectedEntity = entities.Exit(int(self.absMouseX/self.gridLock)*self.gridLock, int(self.absMouseY/self.gridLock)*self.gridLock)
 				elif self.mode == MODE_DELETE:
 					selectedEntity = None
 				elif self.mode == MODE_PATH:
 					selectedEntity = None
 
 			if selectedEntity != None:
-				selectedEntity.move(int(self.absMouseX/10)*10, int(self.absMouseY/10)*10)
+				selectedEntity.move(int(self.absMouseX/self.gridLock)*self.gridLock, int(self.absMouseY/self.gridLock)*self.gridLock)
 
 			if self.clicked:
 				if self.level.entrance != None and self.level.entrance.isClicked(self.absMouseX, self.absMouseY):
@@ -209,32 +210,32 @@ class Editor:
 							break
 
 				if self.mode == MODE_WALLS:
-					self.level.addEntity(entities.Wall(self.idSelected, int(self.absMouseX/10)*10, int(self.absMouseY/10)*10))
+					self.level.addEntity(entities.Wall(self.idSelected, int(self.absMouseX/self.gridLock)*self.gridLock, int(self.absMouseY/self.gridLock)*self.gridLock))
 					lastEntityType = "wall"
 				elif self.mode == MODE_HAZARDS:
-					self.level.addEntity(entities.Hazard(self.idSelected, int(self.absMouseX/10)*10, int(self.absMouseY/10)*10))
+					self.level.addEntity(entities.Hazard(self.idSelected, int(self.absMouseX/self.gridLock)*self.gridLock, int(self.absMouseY/self.gridLock)*self.gridLock))
 					lastEntityType = "hazard"
 				elif self.mode == MODE_ENTRANCE:
-					self.level.entrance = entities.Entrance(int(self.absMouseX/10)*10, int(self.absMouseY/10)*10)
+					self.level.entrance = entities.Entrance(int(self.absMouseX/self.gridLock)*self.gridLock, int(self.absMouseY/self.gridLock)*self.gridLock)
 					lastEntityType = "entrance"
 				elif self.mode == MODE_EXIT:
-					self.level.exit = entities.Exit(int(self.absMouseX/10)*10, int(self.absMouseY/10)*10)
+					self.level.exit = entities.Exit(int(self.absMouseX/self.gridLock)*self.gridLock, int(self.absMouseY/self.gridLock)*self.gridLock)
 					lastEntityType = "exit"
 				elif self.mode == MODE_PATH:
 					if entityIsClicked:
 						if isinstance(clickedEntity, entities.Wall):
-							selectedEntity = entities.Wall(clickedEntity.spriteId, int(self.absMouseX/10)*10, int(self.absMouseY/10)*10)
+							selectedEntity = entities.Wall(clickedEntity.spriteId, int(self.absMouseX/self.gridLock)*self.gridLock, int(self.absMouseY/self.gridLock)*self.gridLock)
 						elif isinstance(clickedEntity, entities.Hazard):
-							selectedEntity = entities.Hazard(clickedEntity.spriteId, int(self.absMouseX/10)*10, int(self.absMouseY/10)*10)
+							selectedEntity = entities.Hazard(clickedEntity.spriteId, int(self.absMouseX/self.gridLock)*self.gridLock, int(self.absMouseY/self.gridLock)*self.gridLock)
 						else:
 							clickedEntity = None
 						pathStart = None
 						pathEnd = None
 					elif clickedEntity != None:
 						if pathStart == None:
-							pathStart = (int(self.absMouseX/10)*10, int(self.absMouseY/10)*10)
+							pathStart = (int(self.absMouseX/self.gridLock)*self.gridLock, int(self.absMouseY/self.gridLock)*self.gridLock)
 						elif pathEnd == None:
-							pathEnd = (int(self.absMouseX/10)*10, int(self.absMouseY/10)*10)
+							pathEnd = (int(self.absMouseX/self.gridLock)*self.gridLock, int(self.absMouseY/self.gridLock)*self.gridLock)
 							clickedEntity.movingOnPath = True
 							clickedEntity.setMovingPath(pathStart, pathEnd)
 							clickedEntity = None
