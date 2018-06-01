@@ -39,13 +39,14 @@ class Entity:
 		self.calculateEdgeLocations()
 
 	def isCollidingWith(self, entity):
-		if self.shape == SHAPE_CIRCLE and entity.shape == SHAPE_CIRCLE:
-			if ((self.center[0] - entity.center[0])**2 + (self.center[1] - entity.center[1])**2)**0.5 <=self.width / 2 + entity.width / 2:
-				return True
-		else:
-			if self.x < entity.right and self.right > entity.x:
-				if self.y < entity.bottom and self.bottom > entity.y:
+		if self.x < entity.right and self.right > entity.x:
+			if self.y < entity.bottom and self.bottom > entity.y:
+				if self.shape == SHAPE_CIRCLE and entity.shape == SHAPE_CIRCLE:
+					if ((self.center[0] - entity.center[0])**2 + (self.center[1] - entity.center[1])**2)**0.5 <=self.width / 2 + entity.width / 2:
+						return True
+				else:
 					return True
+		return False
 
 	def setAnimation(self, animation):
 		if self.currentAnimation != None:
