@@ -194,11 +194,17 @@ class Editor:
 					lastEntityType = "exit"
 				elif self.mode == MODE_DELETE:
 					deleted = False
+					if self.level.entrance.isClicked(self.absMouseX, self.absMouseY) and not deleted:
+						self.level.entrance = None
+						deleted = True
+					if self.level.exit.isClicked(self.absMouseX, self.absMouseY) and not deleted:
+						self.level.exit = None
+						deleted = True
 					for hazard in self.level.entities["hazards"][::-1]:
 						if deleted:
 							break
 						if hazard.isClicked(self.absMouseX, self.absMouseY):
-							self.level.entities["walls"].remove(hazard)
+							self.level.entities["hazards"].remove(hazard)
 							deleted = True
 					for wall in self.level.entities["walls"][::-1]:
 						if deleted:
@@ -207,12 +213,7 @@ class Editor:
 							self.level.entities["walls"].remove(wall)
 							deleted = True
 
-					if self.level.entrance.isClicked(self.absMouseX, self.absMouseY) and not deleted:
-						self.level.entrance = None
-						deleted = True
-					if self.level.exit.isClicked(self.absMouseX, self.absMouseY) and not deleted:
-						self.level.exit = None
-						deleted = True
+					
 
 			if selectedEntity != None:
 				self.renderList.append(selectedEntity)

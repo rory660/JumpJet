@@ -2,13 +2,17 @@ import pygame
 import os
 import animation
 
+SHAPE_SQUARE = 0
+SHAPE_CIRCLE = 1
+
 def loadSpritesFromFolder(path):
 	return [pygame.image.load(path + fileName) for fileName in os.listdir(path)]
 sprites = {"walls":loadSpritesFromFolder("./walls/"), "hazards":loadSpritesFromFolder("./hazards/")}
 class Entity:
-	def __init__(self, sprite, x, y):
+	def __init__(self, sprite, x, y, shape = SHAPE_SQUARE):
 		self.sprite = sprite
 		self.currentAnimation = None
+		self.shape = shape
 		self.x = x
 		self.y = y
 		self.width, self.height = sprite.get_size()
@@ -35,9 +39,13 @@ class Entity:
 		self.calculateEdgeLocations()
 
 	def isCollidingWith(self, entity):
-		if self.x < entity.right and self.right > entity.x:
-			if self.y < entity.bottom and self.bottom > entity.y:
+		if self.shape == SHAPE_CIRCLE and entity.shape == SHAPE_CIRCLE:
+			if ((self.center[0] - entity.center[0])**2 + (self.center[1] - entity.center[1])**2)**0.5 <=self.width / 2 + entity.width / 2:
 				return True
+		else:
+			if self.x < entity.right and self.right > entity.x:
+				if self.y < entity.bottom and self.bottom > entity.y:
+					return True
 
 	def setAnimation(self, animation):
 		if self.currentAnimation != None:
@@ -55,7 +63,7 @@ class Wall(Entity):
 class Hazard(Entity):
 	def __init__(self, spriteId, x, y):
 		self.spriteId = spriteId
-		super().__init__(sprites["hazards"][spriteId], x, y)
+		super().__init__(sprites["hazards"][spriteId], x, y, shape = SHAPE_CIRCLE)
 
 class Entrance(Entity):
 	def __init__(self, x, y):
@@ -67,7 +75,7 @@ class Exit(Entity):
 
 class Player(Entity):
 	def __init__(self, parentLevel, x, y):
-		super().__init__(pygame.image.load("./sprites/ball1.png"), x, y)
+		super().__init__(pygame.image.load("./sprites/ball1.png"), x, y, shape = SHAPE_CIRCLE)
 		self.parentLevel = parentLevel
 		self.speed = [0, 0]
 		self.inAir = False
