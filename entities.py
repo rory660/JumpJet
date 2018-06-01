@@ -67,7 +67,7 @@ class Exit(Entity):
 
 class Player(Entity):
 	def __init__(self, parentLevel, x, y):
-		super().__init__(pygame.image.load("./other/guy.png"), x, y)
+		super().__init__(pygame.image.load("./sprites/ball1.png"), x, y)
 		self.parentLevel = parentLevel
 		self.speed = [0, 0]
 		self.inAir = False
@@ -90,10 +90,14 @@ class Player(Entity):
 		self.hAcceleration = 2000
 		self.vAcceleration = 3000
 
-		self.idleAnimation = animation.Animation()
-		self.idleAnimation.addFrame(pygame.image.load("./player/idle1.png"), 0.5)
-		self.idleAnimation.addFrame(pygame.image.load("./player/idle2.png"), 0.5)
-		self.setAnimation(self.idleAnimation)
+		self.rollFrames = [pygame.image.load("./sprites/ball1.png"), pygame.image.load("./sprites/ball2.png"), pygame.image.load("./sprites/ball3.png"), pygame.image.load("./sprites/ball4.png")]
+
+		# self.idleAnimation = animation.Animation()
+		# self.idleAnimation.addFrame(pygame.image.load("./player/idle1.png"), 0.5)
+		# self.idleAnimation.addFrame(pygame.image.load("./player/idle2.png"), 0.5)
+		# self.setAnimation(self.idleAnimation)
+		self.leftAnimation = animation.Animation(self.rollFrames[::-1], [0.015, 0.015, 0.015, 0.015])
+		self.rightAnimation = animation.Animation(self.rollFrames, [0.015, 0.015, 0.015, 0.015])
 
 
 	def calculateMovement(self, timeLength):
@@ -106,6 +110,10 @@ class Player(Entity):
 					self.speed[0] += self.runAcceleration * timeLength
 				elif self.speed[0] > self.hDesiredSpeed:
 					self.speed[0] -= self.runAcceleration * timeLength
+
+		elif self.currentAnimation != None:
+			self.sprite = self.currentAnimation.getCurrentFrame(0)
+			self.currentAnimation = None
 
 		if self.hBoosting != 0:
 			self.speed[0] = self.hBoosting * self.boostSpeed
@@ -158,8 +166,10 @@ class Player(Entity):
 
 	def runLeft(self):
 		self.running = -1
+		self.currentAnimation = self.leftAnimation
 	def runRight(self):
 		self.running = 1
+		self.currentAnimation = self.rightAnimation
 
 	def boostLeft(self):
 		self.hBoosting = -1

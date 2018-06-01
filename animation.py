@@ -15,8 +15,8 @@ class Animation:
 			return self.frames[0]
 
 		self.time += timeScale
-		if self.time > self.delays[self.currentFrameIndex]:
-			self.time = 0
+		while self.time > self.delays[self.currentFrameIndex]:
+			self.time -= self.delays[self.currentFrameIndex]
 			self.currentFrameIndex += 1
 			if self.currentFrameIndex >= len(self.frames):
 				self.currentFrameIndex = 0
