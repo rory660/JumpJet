@@ -10,8 +10,9 @@ MODE_WALLS = 0
 MODE_HAZARDS = 1
 MODE_ENTRANCE = 2
 MODE_EXIT = 3
-MODE_DELETE = 4
-MODES = 5
+MODE_PATH = 4
+MODE_DELETE = 5
+MODES = 6
 class Editor:
 	def __init__(self):
 		self.saveManager = saveManager.SaveManager()
@@ -112,6 +113,10 @@ class Editor:
 	def mainLoop(self):
 		selectedEntity = entities.Wall(self.idSelected, int(self.absMouseX/10)*10, int(self.absMouseY/10)*10)
 		lastEntityType = "wall"
+		clickedEntity = None
+		entityIsClicked = False
+		pathStart = None
+		pathEnd = None
 		while(self.running):
 			refreshEntity = False
 			self.renderList = []
@@ -166,6 +171,7 @@ class Editor:
 					self.saveManager.saveLevel(self.level)
 
 			if refreshEntity:
+				clickedEntity = None
 				if self.mode == MODE_WALLS:
 					selectedEntity = entities.Wall(self.idSelected, int(self.absMouseX/10)*10, int(self.absMouseY/10)*10)
 				elif self.mode == MODE_HAZARDS:
@@ -176,10 +182,32 @@ class Editor:
 					selectedEntity = entities.Exit(int(self.absMouseX/10)*10, int(self.absMouseY/10)*10)
 				elif self.mode == MODE_DELETE:
 					selectedEntity = None
+				elif self.mode == MODE_PATH:
+					selectedEntity = None
+
 			if selectedEntity != None:
 				selectedEntity.move(int(self.absMouseX/10)*10, int(self.absMouseY/10)*10)
 
 			if self.clicked:
+				if self.level.entrance != None and self.level.entrance.isClicked(self.absMouseX, self.absMouseY):
+					clickedEntity = self.level.entrance
+					entityIsClicked = True
+				elif self.level.exit != None and self.level.exit.isClicked(self.absMouseX, self.absMouseY):
+					clickedEntity = self.level.exit
+					entityIsClicked = True
+				else:
+					entityIsClicked = False
+					for hazard in self.level.entities["hazards"][::-1]:
+						if hazard.isClicked(self.absMouseX, self.absMouseY):
+							entityIsClicked = True
+							clickedEntity = hazard
+							break
+					for wall in self.level.entities["walls"][::-1]:
+						if wall.isClicked(self.absMouseX, self.absMouseY):
+							entityIsClicked = True
+							clickedEntity = wall
+							break
+
 				if self.mode == MODE_WALLS:
 					self.level.addEntity(entities.Wall(self.idSelected, int(self.absMouseX/10)*10, int(self.absMouseY/10)*10))
 					lastEntityType = "wall"
@@ -192,29 +220,50 @@ class Editor:
 				elif self.mode == MODE_EXIT:
 					self.level.exit = entities.Exit(int(self.absMouseX/10)*10, int(self.absMouseY/10)*10)
 					lastEntityType = "exit"
+				elif self.mode == MODE_PATH:
+					if entityIsClicked:
+						if isinstance(clickedEntity, entities.Wall):
+							selectedEntity = entities.Wall(clickedEntity.spriteId, int(self.absMouseX/10)*10, int(self.absMouseY/10)*10)
+						elif isinstance(clickedEntity, entities.Hazard):
+							selectedEntity = entities.Hazard(clickedEntity.spriteId, int(self.absMouseX/10)*10, int(self.absMouseY/10)*10)
+						else:
+							clickedEntity = None
+						pathStart = None
+						pathEnd = None
+					elif clickedEntity != None:
+						if pathStart == None:
+							pathStart = (int(self.absMouseX/10)*10, int(self.absMouseY/10)*10)
+						elif pathEnd == None:
+							pathEnd = (int(self.absMouseX/10)*10, int(self.absMouseY/10)*10)
+							clickedEntity.movingOnPath = True
+							clickedEntity.setMovingPath(pathStart, pathEnd)
+							clickedEntity = None
+							selectedEntity = None
+
+
 				elif self.mode == MODE_DELETE:
-					deleted = False
-					if self.level.entrance.isClicked(self.absMouseX, self.absMouseY) and not deleted:
-						self.level.entrance = None
-						deleted = True
-					if self.level.exit.isClicked(self.absMouseX, self.absMouseY) and not deleted:
-						self.level.exit = None
-						deleted = True
-					for hazard in self.level.entities["hazards"][::-1]:
-						if deleted:
-							break
-						if hazard.isClicked(self.absMouseX, self.absMouseY):
-							self.level.entities["hazards"].remove(hazard)
-							deleted = True
-					for wall in self.level.entities["walls"][::-1]:
-						if deleted:
-							break
-						if wall.isClicked(self.absMouseX, self.absMouseY):
-							self.level.entities["walls"].remove(wall)
-							deleted = True
+					if entityIsClicked:
+						if clickedEntity == self.level.entrance:
+							self.level.entrance = None
+						elif clickedEntity == self.level.exit:
+							self.level.exit = None
+						elif isinstance(clickedEntity, entities.Wall):
+							self.level.entities["walls"].remove(clickedEntity)
+						elif isinstance(clickedEntity, entities.Hazard):
+							self.level.entities["hazards"].remove(clickedEntity)
 
+			if self.mode == MODE_PATH:
+				if isinstance(clickedEntity, entities.Wall):
+					if pathStart != None:
+						self.renderList.append(entities.Wall(clickedEntity.spriteId, pathStart[0], pathStart[1]))
+					if pathEnd != None:
+						self.renderList.append(entities.Wall(clickedEntity.spriteId, pathEnd[0], pathEnd[1]))
+				elif isinstance(clickedEntity, entities.Hazard):
+					if pathStart != None:
+						self.renderList.append(entities.Hazard(clickedEntity.spriteId, pathStart[0], pathStart[1]))
+					if pathEnd != None:
+						self.renderList.append(entities.Hazard(clickedEntity.spriteId, pathEnd[0], pathEnd[1]))
 					
-
 			if selectedEntity != None:
 				self.renderList.append(selectedEntity)
 
@@ -226,6 +275,8 @@ class Editor:
 				self.renderText("Mode: Entrance")
 			elif self.mode == MODE_EXIT:
 				self.renderText("Mode: Exit")
+			elif self.mode == MODE_PATH:
+				self.renderText("Mode: Path")
 			elif self.mode == MODE_DELETE:
 				self.renderText("Mode: Delete")
 			self.renderer.update(self.renderList, self.uiRenderList)

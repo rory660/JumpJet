@@ -9,12 +9,18 @@ def loadSpritesFromFolder(path):
 	return [pygame.image.load(path + fileName) for fileName in os.listdir(path)]
 sprites = {"walls":loadSpritesFromFolder("./walls/"), "hazards":loadSpritesFromFolder("./hazards/")}
 class Entity:
-	def __init__(self, sprite, x, y, shape = SHAPE_SQUARE):
+	def __init__(self, sprite, x, y, shape = SHAPE_SQUARE, movingOnPath = False):
 		self.sprite = sprite
 		self.currentAnimation = None
 		self.shape = shape
+		self.movingOnPath = movingOnPath
+		self.pathMoveDir = [0,0]
+		self.path = []
+		self.movingTarget = 1
+		self.movingSpeed = 300
 		self.x = x
 		self.y = y
+		self.lastMoveDistance = 0
 		self.width, self.height = sprite.get_size()
 		self.calculateEdgeLocations()
 
@@ -22,6 +28,34 @@ class Entity:
 		self.x = x
 		self.y = y
 		self.calculateEdgeLocations()
+
+	def setMovingPath(self, start, finish):
+		self.path = [start, finish]
+		self.movingOnPath = True
+
+
+	def moveOnPath(self, timeLength):
+		target = self.path[self.movingTarget]
+		oldX = self.x
+		xDistance = target[0] - self.x
+		yDistance = target[1] - self.y
+		xMoveAmount = int(xDistance / abs(xDistance + yDistance) * self.movingSpeed * timeLength)
+		self.lastMoveDistance = xMoveAmount
+		yMoveAmount = int(yDistance / abs(xDistance + yDistance) * self.movingSpeed * timeLength)
+		if xMoveAmount > 0:
+			self.pathMoveDir[0] = 1
+		elif xMoveAmount < 0:
+			self.pathMoveDir[0] = -1
+		if yMoveAmount > 0:
+			self.pathMoveDir[1] = 1
+		elif yMoveAmount < 0:
+			self.pathMoveDir[1] = -1
+		self.moveRelative(xMoveAmount, yMoveAmount)
+		if (oldX < target[0] and self.x >= target[0]) or (oldX > target[0] and self.x <= target[0]):
+			if self.movingTarget == 1:
+				self.movingTarget = 0
+			else:
+				self.movingTarget = 1
 
 	def moveRelative(self, x, y):
 		self.x += x
@@ -202,42 +236,58 @@ class Player(Entity):
 		if vertical:
 			self.speed[1] = 0
 
-	def moveRelative(self, x, y):
+	def moveRelative(self, x, y, checkColX = True, checkColY = True):
 		self.x += x
 		self.x = int(self.x)
 		self.calculateEdgeLocations()
 		checkingCollision = True
-		while checkingCollision:
+		while checkingCollision and checkColX:
 			checkingCollision = False
 			for wall in self.parentLevel.getWalls():
 				if self.isCollidingWith(wall):
 					self.stop(vertical = False)
 					checkingCollision = True
-					if x < 0:
-						self.x = wall.right
-					elif x > 0:
-						self.x = wall.x - self.width
+					if wall.movingOnPath and wall.pathMoveDir[0] != 0:
+						if self.center[0] > wall.center[0]:
+							self.x += 1
+						elif self.center[0] < wall.center[0]:
+							self.x -= 1
+					else:
+						if x < 0:
+							self.x = wall.right
+						elif x > 0:
+							self.x = wall.x - self.width
+					
 					self.calculateEdgeLocations()
 					
 		self.y += y
 		self.y = int(self.y)
 		self.calculateEdgeLocations()
-		checkingCollision = True
-		self.inAir = True
-		while checkingCollision:
+		
+		if checkColY:
+			checkingCollision = True
+			self.inAir = True
+		while checkingCollision and checkColY:
 			checkingCollision = False
 			for wall in self.parentLevel.getWalls():
 				if self.isCollidingWith(wall):
 					self.stop(horizontal = False)
 					self.speed[1] = 0
 					checkingCollision = True
-					if y < 0:
-						self.y = wall.bottom
-						self.jumpTimer = 0
-					elif y > 0:
-						self.y = wall.y - self.height
-						self.inAir = False
-					self.calculateEdgeLocations()
+					if wall.movingOnPath and wall.pathMoveDir[1] != 0:
+						if self.center[1] > wall.center[1]:
+							self.y += 1
+						elif self.center[1] < wall.center[1]:
+							self.y -= 1
+					else:
+						if y < 0:
+							self.y = wall.bottom
+							self.jumpTimer = 0
+						elif y > 0:
+							self.y = wall.y - self.height
+							self.inAir = False
+							self.moveRelative(wall.lastMoveDistance, 0, checkColY = False)
+					self.calculateEdgeLocations()		
 
 	def isOutOfBounds(self):
 		return self.x > self.parentLevel.width or self.y > self.parentLevel.height or self.right < 0 or self.bottom < 0

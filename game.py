@@ -163,6 +163,13 @@ class Game:
 			
 			
 
+			for hazard in self.level.entities["hazards"]:
+				if hazard.movingOnPath:
+					hazard.moveOnPath(self.timePassed)
+			for wall in self.level.entities["walls"]:
+				if wall.movingOnPath:
+					wall.moveOnPath(self.timePassed)
+					
 			self.level.player.calculateMovement(self.timePassed)
 			for hazard in self.level.entities["hazards"]:
 				if self.level.player.isCollidingWith(hazard):
