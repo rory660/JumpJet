@@ -4,6 +4,7 @@ import animation
 
 SHAPE_SQUARE = 0
 SHAPE_CIRCLE = 1
+SHAPE_FANCY = 2
 
 def loadSpritesFromFolder(path):
 	return [pygame.image.load(path + fileName) for fileName in os.listdir(path)]
@@ -85,6 +86,12 @@ class Entity:
 		self.calculateEdgeLocations()
 
 	def isCollidingWith(self, entity):
+		if self.shape == SHAPE_FANCY and entity.shape == SHAPE_FANCY:
+			mask1 = pygame.mask.from_surface(self.getCurrentSprite())
+			mask2 = pygame.mask.from_surface(entity.getCurrentSprite())
+			if mask1.overlap(mask2, (entity.x - self.x, entity.y - self.y)) != None:
+				return True
+			return False
 		if self.x < entity.right and self.right > entity.x:
 			if self.y < entity.bottom and self.bottom > entity.y:
 				if self.shape == SHAPE_CIRCLE and entity.shape == SHAPE_CIRCLE:
@@ -102,15 +109,20 @@ class Entity:
 	def isClicked(self, mouseX, mouseY):
 		return mouseX >= self.x and mouseX <= self.right and mouseY >= self.y and mouseY <= self.bottom
 
+	def getCurrentSprite(self):
+		if self.currentAnimation != None:
+			return self.currentAnimation.getCurrentFrame(0)
+		return self.sprite
+
 class Wall(Entity):
-	def __init__(self, spriteId, x, y):
+	def __init__(self, spriteId, x, y, shape = SHAPE_SQUARE):
 		self.spriteId = spriteId
 		super().__init__(sprites["walls"][spriteId], x, y)
 
 class Hazard(Entity):
 	def __init__(self, spriteId, x, y):
 		self.spriteId = spriteId
-		super().__init__(sprites["hazards"][spriteId], x, y)
+		super().__init__(sprites["hazards"][spriteId], x, y, shape = SHAPE_FANCY)
 		if hazardAnimations[spriteId] != []:
 			anim = animation.Animation(hazardAnimations[spriteId], [0.2 for x in hazardAnimations[spriteId]])
 			self.setAnimation(anim)
@@ -125,7 +137,7 @@ class Exit(Entity):
 
 class Player(Entity):
 	def __init__(self, parentLevel, x, y):
-		super().__init__(pygame.image.load("./sprites/ball1.png"), x, y, shape = SHAPE_CIRCLE)
+		super().__init__(pygame.image.load("./player/run1.png"), x, y, shape = SHAPE_FANCY)
 		self.parentLevel = parentLevel
 		self.speed = [0, 0]
 		self.inAir = False
@@ -136,26 +148,27 @@ class Player(Entity):
 		
 
 		self.runAcceleration = 1000
-		self.boostSpeed = 1000
+		self.boostSpeed = 900
 		self.runSpeed = 400
 		self.fallSpeed = 0
 		self.hBoosting = 0
 		self.vBoosting = 0
-		self.jumpSpeed = 800
+		self.jumpSpeed = 1000
 		self.boostDistance = 50
 
 		self.airHAcceleration = 1000
 		self.hAcceleration = 2000
 		self.vAcceleration = 3000
 
-		self.rollFrames = [pygame.image.load("./sprites/ball1.png"), pygame.image.load("./sprites/ball2.png"), pygame.image.load("./sprites/ball3.png"), pygame.image.load("./sprites/ball4.png")]
+		self.runFrames = [pygame.image.load("./player/run" + str(x) + ".png") for x in range(1,7)]
+		self.runLeftFrames = [pygame.transform.flip(img, True, False) for img in self.runFrames]
 
 		# self.idleAnimation = animation.Animation()
 		# self.idleAnimation.addFrame(pygame.image.load("./player/idle1.png"), 0.5)
 		# self.idleAnimation.addFrame(pygame.image.load("./player/idle2.png"), 0.5)
 		# self.setAnimation(self.idleAnimation)
-		self.leftAnimation = animation.Animation(self.rollFrames[::-1], [0.015, 0.015, 0.015, 0.015])
-		self.rightAnimation = animation.Animation(self.rollFrames, [0.015, 0.015, 0.015, 0.015])
+		self.leftAnimation = animation.Animation(self.runLeftFrames, [0.02 for x in range(1,7)])
+		self.rightAnimation = animation.Animation(self.runFrames, [0.02 for x in range(1,7)])
 
 
 	def calculateMovement(self, timeLength):
@@ -256,7 +269,11 @@ class Player(Entity):
 		self.x = int(self.x)
 		self.calculateEdgeLocations()
 		checkingCollision = True
+		collisionCounter = 0
 		while checkingCollision and checkColX:
+			collisionCounter += 1
+			if collisionCounter > 50:
+				self.y -= 1
 			checkingCollision = False
 			for wall in self.parentLevel.getWalls():
 				if self.isCollidingWith(wall):
@@ -282,7 +299,11 @@ class Player(Entity):
 		if checkColY:
 			checkingCollision = True
 			self.inAir = True
+		collisionCounter = 0
 		while checkingCollision and checkColY:
+			collisionCounter += 1
+			if collisionCounter > 50:
+				self.y -= 1
 			checkingCollision = False
 			for wall in self.parentLevel.getWalls():
 				if self.isCollidingWith(wall):
