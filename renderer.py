@@ -8,8 +8,10 @@ class Renderer:
 		self.editorMode = editorMode
 		self.camera = camera
 		pygame.init()
+		pygame.display.set_caption("Spectrum Platformer")
 		self.display = pygame.display.set_mode((self.camera.width, self.camera.height))
 		self.sprites = {"walls":self.loadSpritesFromFolder("./walls/"), "hazards":self.loadSpritesFromFolder("./hazards/")}
+		pygame.display.set_icon(self.sprites["walls"][0])
 		self.currentTime = time.clock()
 		self.maxFPS = 60
 		self.level = gameLevel
