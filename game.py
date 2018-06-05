@@ -151,18 +151,6 @@ class Game:
 			if self.keysPressedDown["space"]:
 				self.level.player.jump()
 
-			if self.keysPressedDown["left"]:
-				self.level.player.boostLeft()
-			if self.keysPressedDown["right"]:
-				self.level.player.boostRight()
-			if self.keysPressedDown["up"]:
-				self.level.player.boostUp()
-			if self.keysPressedDown["down"]:
-				self.level.player.boostDown()
-
-			
-			
-
 			for hazard in self.level.entities["hazards"]:
 				if hazard.movingOnPath:
 					hazard.moveOnPath(self.timePassed)

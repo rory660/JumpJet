@@ -118,6 +118,7 @@ class Editor:
 		entityIsClicked = False
 		pathStart = None
 		pathEnd = None
+		entitySpeed = 300
 		while(self.running):
 			refreshEntity = False
 			self.renderList = []
@@ -143,6 +144,8 @@ class Editor:
 					if self.idSelected > 0:
 						self.idSelected -= 1
 						refreshEntity = True
+				elif self.mode == MODE_PATH:
+					entitySpeed -= 50
 			if self.keysPressed["e"]:
 				if self.mode == MODE_WALLS:
 					if self.idSelected < len(self.renderer.sprites["walls"]) - 1:
@@ -152,6 +155,8 @@ class Editor:
 					if self.idSelected < len(self.renderer.sprites["hazards"]) - 1:
 						self.idSelected += 1
 						refreshEntity = True
+				elif self.mode == MODE_PATH:
+					entitySpeed += 50
 
 			if self.keysPressed["z"]:
 				if self.keysDown["ctrl"]:
@@ -222,7 +227,7 @@ class Editor:
 					self.level.exit = entities.Exit(int(self.absMouseX/self.gridLock)*self.gridLock, int(self.absMouseY/self.gridLock)*self.gridLock)
 					lastEntityType = "exit"
 				elif self.mode == MODE_PATH:
-					if entityIsClicked:
+					if entityIsClicked and pathStart == None:
 						if isinstance(clickedEntity, entities.Wall):
 							selectedEntity = entities.Wall(clickedEntity.spriteId, int(self.absMouseX/self.gridLock)*self.gridLock, int(self.absMouseY/self.gridLock)*self.gridLock)
 						elif isinstance(clickedEntity, entities.Hazard):
@@ -238,8 +243,11 @@ class Editor:
 							pathEnd = (int(self.absMouseX/self.gridLock)*self.gridLock, int(self.absMouseY/self.gridLock)*self.gridLock)
 							clickedEntity.movingOnPath = True
 							clickedEntity.setMovingPath(pathStart, pathEnd)
+							clickedEntity.movingSpeed = entitySpeed
 							clickedEntity = None
 							selectedEntity = None
+							pathStart = None
+							pathEnd = None
 
 
 				elif self.mode == MODE_DELETE:
@@ -278,6 +286,7 @@ class Editor:
 				self.renderText("Mode: Exit")
 			elif self.mode == MODE_PATH:
 				self.renderText("Mode: Path")
+				self.renderText("Speed: " + str(entitySpeed), y = 50)
 			elif self.mode == MODE_DELETE:
 				self.renderText("Mode: Delete")
 			self.renderer.update(self.renderList, self.uiRenderList)
@@ -294,8 +303,8 @@ class Editor:
 		elif entityType == "exit":
 			self.level.exit = None
 
-	def renderText(self, text):
+	def renderText(self, text, x = 10, y = 10):
 		textRender = self.uiFont.render(text, True, (255,255,255), (0,0,0))
-		self.uiRenderList.append(entities.Entity(textRender, 10, 10))
+		self.uiRenderList.append(entities.Entity(textRender, x, y))
 
 editor = Editor()

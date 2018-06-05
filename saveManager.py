@@ -20,12 +20,12 @@ class SaveManager:
 			for wall in level.entities["walls"]:
 				levelFile.write("wall," + str(wall.spriteId) + "," + str(wall.x) + "," + str(wall.y))
 				if wall.movingOnPath:
-					levelFile.write(",path," + str(wall.path[0][0]) + "," + str(wall.path[0][1]) + "," + str(wall.path[1][0]) + "," + str(wall.path[1][1]))
+					levelFile.write(",path," + str(wall.path[0][0]) + "," + str(wall.path[0][1]) + "," + str(wall.path[1][0]) + "," + str(wall.path[1][1]) + "," + str(wall.movingSpeed))
 				levelFile.write("\n")
 			for hazard in level.entities["hazards"]:
 				levelFile.write("hazard," + str(hazard.spriteId) + "," + str(hazard.x) + "," + str(hazard.y))
 				if hazard.movingOnPath:
-					levelFile.write(",path," + str(hazard.path[0][0]) + "," + str(hazard.path[0][1]) + "," + str(hazard.path[1][0]) + "," + str(hazard.path[1][1]))
+					levelFile.write(",path," + str(hazard.path[0][0]) + "," + str(hazard.path[0][1]) + "," + str(hazard.path[1][0]) + "," + str(hazard.path[1][1]) + "," + str(hazard.movingSpeed))
 				levelFile.write("\n")
 			if not level.entrance == None:
 				levelFile.write("entrance," + str(level.entrance.x) + "," + str(level.entrance.y) + "\n")
@@ -58,12 +58,12 @@ class SaveManager:
 							if entInfo[0] == "wall":
 								ent = entities.Wall(int(entInfo[1]), int(entInfo[2]), int(entInfo[3]))
 								if "path" in entInfo:
-									ent.setMovingPath((int(entInfo[5]), int(entInfo[6])), (int(entInfo[7]), int(entInfo[8])))
+									ent.setMovingPath((int(entInfo[5]), int(entInfo[6])), (int(entInfo[7]), int(entInfo[8])), int(entInfo[9]))
 								loadedLevel.addEntity(ent)
 							elif entInfo[0] == "hazard":
 								ent = entities.Hazard(int(entInfo[1]), int(entInfo[2]), int(entInfo[3]))
 								if "path" in entInfo:
-									ent.setMovingPath((int(entInfo[5]), int(entInfo[6])), (int(entInfo[7]), int(entInfo[8])))
+									ent.setMovingPath((int(entInfo[5]), int(entInfo[6])), (int(entInfo[7]), int(entInfo[8])), int(entInfo[9]))
 								loadedLevel.addEntity(ent)
 							elif entInfo[0] == "entrance":
 							 	loadedLevel.entrance = entities.Entrance(int(entInfo[1]), int(entInfo[2]))

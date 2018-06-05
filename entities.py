@@ -1,6 +1,7 @@
 import pygame
 import os
 import animation
+import math
 
 SHAPE_SQUARE = 0
 SHAPE_CIRCLE = 1
@@ -22,6 +23,7 @@ class Entity:
 		self.movingSpeed = 300
 		self.x = x
 		self.y = y
+		self.pathInit = True
 		self.lastMoveDistance = 0
 		self.width, self.height = sprite.get_size()
 		self.calculateEdgeLocations()
@@ -31,23 +33,31 @@ class Entity:
 		self.y = y
 		self.calculateEdgeLocations()
 
-	def setMovingPath(self, start, finish):
+	def setMovingPath(self, start, finish, speed = 300):
 		self.path = [start, finish]
 		self.movingOnPath = True
+		self.movingSpeed = speed
 
 
 	def moveOnPath(self, timeLength):
+		if self.pathInit == True:
+			self.x = self.path[0][0]
+			self.y = self.path[0][1]
+			self.pathInit = False
 		target = self.path[self.movingTarget]
 		oldX = self.x
 		oldY = self.y
 		xDistance = target[0] - self.x
 		yDistance = target[1] - self.y
+		
 		xMoveAmount = 0
 		yMoveAmount = 0
-		if xDistance + yDistance != 0:
-			xMoveAmount = int(xDistance / abs(xDistance + yDistance) * self.movingSpeed * timeLength)
+		if abs(xDistance) + abs(yDistance) != 0:
+			xMoveAmount = round(xDistance / (abs(xDistance) + abs(yDistance)) * self.movingSpeed * timeLength)
 			self.lastMoveDistance = xMoveAmount
-			yMoveAmount = int(yDistance / abs(xDistance + yDistance) * self.movingSpeed * timeLength)
+			yMoveAmount = round(yDistance / (abs(xDistance) + abs(yDistance)) * self.movingSpeed * timeLength)
+
+
 		if xMoveAmount > 0:
 			self.pathMoveDir[0] = 1
 		elif xMoveAmount < 0:
@@ -57,14 +67,15 @@ class Entity:
 		elif yMoveAmount < 0:
 			self.pathMoveDir[1] = -1
 		self.moveRelative(xMoveAmount, yMoveAmount)
+
 		if self.pathMoveDir[0] != 0:
 			if (oldX < target[0] and self.x >= target[0]) or (oldX > target[0] and self.x <= target[0]):
 				if self.movingTarget == 1:
 					self.movingTarget = 0
 				else:
 					self.movingTarget = 1
-		else:
-			if (oldY < target[1] and self.y >= target[1]) or (oldY > target[1] and self.y <= target[1]):
+		elif self.pathMoveDir[1] != 0:
+			if (oldY < target[1] and self.y >= target[1]) or (oldY > target[1] and self.y <= target[1]) or (xMoveAmount == 0 and yMoveAmount == 0):
 				if self.movingTarget == 1:
 					self.movingTarget = 0
 				else:
@@ -148,13 +159,9 @@ class Player(Entity):
 		
 
 		self.runAcceleration = 1000
-		self.boostSpeed = 900
 		self.runSpeed = 400
 		self.fallSpeed = 0
-		self.hBoosting = 0
-		self.vBoosting = 0
 		self.jumpSpeed = 1000
-		self.boostDistance = 50
 
 		self.airHAcceleration = 1000
 		self.hAcceleration = 2000
@@ -162,11 +169,6 @@ class Player(Entity):
 
 		self.runFrames = [pygame.image.load("./player/run" + str(x) + ".png") for x in range(1,7)]
 		self.runLeftFrames = [pygame.transform.flip(img, True, False) for img in self.runFrames]
-
-		# self.idleAnimation = animation.Animation()
-		# self.idleAnimation.addFrame(pygame.image.load("./player/idle1.png"), 0.5)
-		# self.idleAnimation.addFrame(pygame.image.load("./player/idle2.png"), 0.5)
-		# self.setAnimation(self.idleAnimation)
 		self.leftAnimation = animation.Animation(self.runLeftFrames, [0.02 for x in range(1,7)])
 		self.rightAnimation = animation.Animation(self.runFrames, [0.02 for x in range(1,7)])
 
@@ -185,14 +187,6 @@ class Player(Entity):
 		elif self.currentAnimation != None:
 			self.sprite = self.currentAnimation.getCurrentFrame(0)
 			self.currentAnimation = None
-
-		if self.hBoosting != 0:
-			self.speed[0] = self.hBoosting * self.boostSpeed
-			if self.inAir:
-				self.speed[1] -= 400
-
-		if self.vBoosting != 0:
-			self.speed[1] = self.vBoosting * self.boostSpeed
 
 		if self.jumping:
 			self.speed[1] = -self.jumpSpeed
@@ -223,14 +217,7 @@ class Player(Entity):
 		xMove = self.speed[0] * timeLength
 		yMove = self.speed[1] * timeLength
 
-		if self.hBoosting != 0:
-			xMove += self.boostDistance * self.hBoosting
-		elif self.vBoosting != 0:
-			yMove += self.boostDistance * self.vBoosting
-
 		self.running = 0
-		self.hBoosting = 0
-		self.vBoosting = 0
 		self.jumping = False
 
 		self.moveRelative(xMove, yMove)
@@ -241,18 +228,6 @@ class Player(Entity):
 	def runRight(self):
 		self.running = 1
 		self.currentAnimation = self.rightAnimation
-
-	def boostLeft(self):
-		self.hBoosting = -1
-
-	def boostRight(self):
-		self.hBoosting = 1
-
-	def boostDown(self):
-		self.vBoosting = 1
-
-	def boostUp(self):
-		self.vBoosting = -1
 
 	def jump(self):
 		if not self.inAir:
@@ -269,11 +244,7 @@ class Player(Entity):
 		self.x = int(self.x)
 		self.calculateEdgeLocations()
 		checkingCollision = True
-		collisionCounter = 0
 		while checkingCollision and checkColX:
-			collisionCounter += 1
-			if collisionCounter > 50:
-				self.y -= 1
 			checkingCollision = False
 			for wall in self.parentLevel.getWalls():
 				if self.isCollidingWith(wall):
@@ -299,31 +270,21 @@ class Player(Entity):
 		if checkColY:
 			checkingCollision = True
 			self.inAir = True
-		collisionCounter = 0
 		while checkingCollision and checkColY:
-			collisionCounter += 1
-			if collisionCounter > 50:
-				self.y -= 1
 			checkingCollision = False
 			for wall in self.parentLevel.getWalls():
 				if self.isCollidingWith(wall):
 					self.stop(horizontal = False)
 					self.speed[1] = 0
 					checkingCollision = True
-					if wall.movingOnPath and wall.pathMoveDir[1] != 0:
-						if self.center[1] > wall.center[1]:
-							self.y += 1
-						elif self.center[1] < wall.center[1]:
-							self.y -= 1
-					else:
-						if y < 0:
-							self.y = wall.bottom
-							self.jumpTimer = 0
-						elif y > 0:
-							self.y = wall.y - self.height
-							self.inAir = False
-							if wall.lastMoveDistance != 0:
-								self.moveRelative(wall.lastMoveDistance, 0, checkColY = False)
+					if y < 0:
+						self.y = wall.bottom
+						self.jumpTimer = 0
+					elif y > 0:
+						self.y = wall.y - self.height
+						self.inAir = False
+						if wall.lastMoveDistance != 0:
+							self.moveRelative(wall.lastMoveDistance, 0, checkColY = False)
 					self.calculateEdgeLocations()		
 
 	def isOutOfBounds(self):
