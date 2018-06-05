@@ -1,5 +1,5 @@
 # Spectrum Platformer (temporary title)
-![screenshot](https://user-images.githubusercontent.com/30571778/40794783-18333c7c-64f8-11e8-92fa-c9b667f0a3d2.png)
+![screenshot](https://user-images.githubusercontent.com/30571778/40951368-7ac13762-686e-11e8-88ab-851114373dbb.png)
 Platformer game made with Pygame
 
 ## Requirements
